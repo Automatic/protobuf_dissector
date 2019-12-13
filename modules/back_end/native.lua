@@ -127,6 +127,7 @@ function NativeDecoder.new(ttype, pfield, tag, name, label, oneof_name)
     local new_class = Base.new("FIXED32", pfield, tag, name, label, oneof_name)
     dassert(decoder_func[ttype], "Programming error: No decoder function for ttype:", ttype)
     new_class["decode_func"] = decoder_func[ttype]
+    new_class["packable"] = (ttype ~= "STRING" and ttype ~= "BYTES")
     setmetatable( new_class, NativeDecoder_mt )
     return new_class
 end

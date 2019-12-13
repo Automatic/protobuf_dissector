@@ -342,10 +342,23 @@ function Decoder:decodeTags(tags, frequency)
         dassert(object.decode, "Programming error: tag in table does not have a dissect function")
         if self:enterRecursion() then
             local limit, cursor = self:pushLimit(size)
-            if not object:decode(self, self.tag, self.last_wtype) then
-                -- the error should already be handled
-                return
-            end
+            local is_packed = (self.last_wtype == "LENGTH_DELIMITED" and
+                                   object["packable"])
+            --[[
+
+                "Protocol buffer parsers must be able to parse
+                repeated fields that were compiled as packed as if
+                they were not packed, and vice versa. This permits
+                adding [packed=true] to existing fields in a forward-
+                and backward-compatible way."
+
+            ]]--
+            repeat
+                if not object:decode(self, self.tag, self.last_wtype) then
+                    -- the error should already be handled
+                    return
+                end
+            until not is_packed or self.limit <= 0
             self:exitRecursion()
             self:popLimit(limit, cursor)
             -- verify END_GROUP if previously START_GROUP?
